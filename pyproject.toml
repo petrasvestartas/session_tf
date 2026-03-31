@@ -1,0 +1,19 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "session_tf"
+version = "0.1.0"
+description = "Transformations and utilities built on session_py"
+authors = [{name = "Petras Vestartas", email = "petrasvestartas@gmail.com"}]
+license = {text = "MIT"}
+readme = "ReadMe.md"
+requires-python = ">=3.8"
+dependencies = ["session-py>=0.35.0"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0", "pytest-cov>=4.0"]
+
+[tool.hatch.build]
+src-layout = true
