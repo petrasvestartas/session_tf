@@ -1,11 +1,9 @@
-"""Example: create a box mesh using session_py."""
+"""Example: visualize all FloorBuilder public properties."""
 
 from session_py.session import Session
 from session_py.session_config import SESSION_CONFIG
-from session_py import Mesh
 from session_tf.floor import FloorBuilder
 from session_compas.session import view
-
 
 
 
@@ -20,24 +18,85 @@ builder = FloorBuilder(
     beam_w=200,
 )
 
-# for p in builder.oculus_points:
-#     session.add_point(p)
+# ------------------------------------------------------------------ #
+#  Floor plan geometry (2D)
+# ------------------------------------------------------------------ #
 
+# Four points whose distance is sqrt(2) * oculus
+for p in builder.oculus_points:
+    session.add_point(p)
+
+# The main polygon of the floor
 session.add_polyline(builder.quarter_polygon)
-# session.add_point(builder.corner_point)
 
+# The bottom left corner
+session.add_point(builder.corner_point)
+
+# Points along quarter boundary
 for p in builder.boundary_points:
     session.add_point(p)
 
-# session.add_polyline(builder.offset_polygon(builder.quarter_polygon, builder.thick))
+# ------------------------------------------------------------------ #
+#  Axes & ribs (3D curves along the vault)
+# ------------------------------------------------------------------ #
 
+# Lines of the ribs, with a small offset for the two central axes
 for line in builder.axes:
     session.add_line(line)
 
-# box = Mesh.create_box(2.0, 3.0, 1.5)
-# session.add_mesh(box)
+# The point where the two boundary axes intersect
+session.add_point(builder.corner_axis_point)
 
-session.pb_dump("build_model.pb")
+# Two boundary parabolas for first and last axes
+for polyline in builder.boundary_parabolas:
+    session.add_polyline(polyline)
+
+# Planes from lines and z-axis
+for plane in builder.target_planes:
+    plane.width = 200
+    session.add_plane(plane)
+
+# Four parabolas at each axis
+for polyline in builder.rib_parabolas:
+    session.add_polyline(polyline)
+
+# ------------------------------------------------------------------ #
+#  Column head (transition from ribs to column)
+# ------------------------------------------------------------------ #
+
+# Top ring and bottom ring of the column head
+pts, pts_bottom = builder.column_head_points
+for i in range(len(pts)):
+    session.add_point(pts[i])
+    session.add_point(pts_bottom[i])
+
+# Cut planes for the column head
+for plane in builder.cut_planes:
+    plane.width = 200
+    session.add_plane(plane)
+
+# ------------------------------------------------------------------ #
+#  Corner block & end planes
+# ------------------------------------------------------------------ #
+
+# Points defining the top block of the column head
+for p in builder.top_corner_block_points:
+    session.add_point(p)
+
+# Planes at midpoints of corner block edges
+for plane in builder.top_end_planes:
+    plane.width = 200
+    session.add_plane(plane)
+
+# End planes for each rib
+for plane in builder.end_planes:
+    plane.width = 200
+    session.add_plane(plane)
+
+# Diagonal cut plane at the corner
+plane = builder.end_diagonal_plane
+plane.width = 200
+session.add_plane(plane)
+
 SESSION_CONFIG.scale_factor = 0.001  # mm → m
-view("build_model.pb")
-
+view(session)
